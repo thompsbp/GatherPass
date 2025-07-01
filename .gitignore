@@ -1,0 +1,29 @@
+# Environment variables
+# These files contain secrets and should not be committed to version control.
+# The .example files are committed instead as templates.
+.env.api
+.env.bot
+.env.db
+
+# Python virtual environments
+venv/
+env/
+.venv/
+
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and editor configuration
+.idea/
+.vscode/
+*.swp
+
+# macOS specific
+.DS_Store
+
+# Docker
+# Used for local development overrides that should not be shared.
+docker-compose.override.yml
