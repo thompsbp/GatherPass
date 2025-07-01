@@ -95,9 +95,8 @@ reverse_proxy api:8000
 
 With all your configuration files in place, you can now launch the entire stack with a single command:
 
-```bash
+````bash
 docker-compose up --build
-```
 
 This command will:
 
@@ -113,5 +112,5 @@ To run the stack in the background (detached mode), use:
 
 ```bash
 docker-compose up --build -d
-```
 
+````
