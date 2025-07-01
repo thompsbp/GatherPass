@@ -76,10 +76,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES=43200 # 30 days
 
 Bot configuration
 
-DISCORD*BOT_TOKEN=your_discord_bot_token_from_developer_portal
+DISCORD_BOT_TOKEN=your_discord_bot_token_from_developer_portal
 ROOT_ADMIN_ID=your_personal_discord_user_id
 API_URL=https://your-domain.duckdns.org
-BOT_API_KEY=use_the_same_long_secret_string_as_in*.env.api
+BOT_API_KEY=use_the_same_long_secret_string_as_in\*.env.api
 
 ### 4. Configure the Web Server
 
@@ -101,13 +101,10 @@ docker-compose up --build
 
 This command will:
 
-    Pull the base images for MariaDB and Caddy.
-
-    Build the custom Docker images for your API and Bot.
-
-    Create the Docker network and volumes.
-
-    Start all four containers in the correct order.
+1. Pull the base images for MariaDB and Caddy.
+2. Build the custom Docker images for your API and Bot.
+3. Create the Docker network and volumes.
+4. Start all four containers in the correct order.
 
 To run the stack in the background (detached mode), use:
 
