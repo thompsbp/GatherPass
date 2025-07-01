@@ -76,6 +76,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=43200 # 30 days
 
 Bot configuration
 
+> **Note:** If you haven't already set up your Discord bot then please see the instructions below.
+
 DISCORD_BOT_TOKEN=your_discord_bot_token_from_developer_portal
 ROOT_ADMIN_ID=your_personal_discord_user_id
 API_URL=https://your-domain.duckdns.org
@@ -111,3 +113,56 @@ To run the stack in the background (detached mode), use:
 ```bash
 docker-compose up --build -d
 ```
+
+## Discord Application & Bot Setup Guide
+
+Follow these steps to create the Discord application, get the required credentials, and invite the bot to your server.
+
+### 1. Create the Application
+
+First, you need to create a new application in the Discord Developer Portal.
+
+1.  Go to the [Discord Developer Portal](https://discord.com/developers/applications) and log in.
+2.  Click the **New Application** button in the top-right corner.
+3.  Give your application a name (e.g., "Seasonal Points Bot") and agree to the Discord Developer Terms of Service.
+4.  Click **Create**. You'll be taken to your application's main page.
+
+### 2. Create a Bot User and Get the Token
+
+Now you'll add a bot user to the application and get the secret token it will use to log in.
+
+1.  In the left-hand menu, click on the **Bot** tab.
+2.  Click the **Add Bot** button. A confirmation pop-up will appear; click **Yes, do it!**.
+3.  Under the bot's username, you'll see a section called **TOKEN**. Click the **Reset Token** button.
+4.  **This is the only time you will be able to see the full token.** Click the **Copy** button to copy the token.
+5.  Paste this token into your `.env.bot.example` file as the value for `DISCORD_BOT_TOKEN`. **Do not share this token with anyone.**
+
+### 3. Configure Bot Permissions (Intents)
+
+Your bot's code needs permission to access certain data from Discord. These are called "Gateway Intents."
+
+1.  Still on the **Bot** page, scroll down to the **Privileged Gateway Intents** section.
+2.  Enable the following two intents:
+    - **PRESENCE INTENT** (Optional, but good for some features)
+    - **SERVER MEMBERS INTENT** (Required for the bot to see member details like names and roles)
+3.  Click **Save Changes**.
+
+### 4. Invite the Bot to Your Server
+
+Finally, you need to create an invitation link that grants the bot the correct permissions on your server.
+
+1.  In the left-hand menu, click on the **OAuth2** tab, then select **URL Generator**.
+2.  In the **SCOPES** box, check the following:
+    - `bot`
+    - `applications.commands`
+3.  A new **BOT PERMISSIONS** box will appear below. Check the following permissions that your bot will need to function:
+    - **Read Messages/View Channels**
+    - **Send Messages**
+    - **Send Messages in Threads**
+    - **Embed Links**
+    - **Attach Files**
+    - **Manage Roles** (If you plan for the bot to award roles as prizes)
+4.  Scroll down to the **Generated URL** box at the bottom of the page and click **Copy**.
+5.  Paste this URL into your web browser, select the server you want to add the bot to from the dropdown menu, and click **Continue** and then **Authorize**.
+
+The bot will now appear in your server's member list (likely offline). Once you start your `docker-compose` stack, it will log in and come online, ready to receive commands.
