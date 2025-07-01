@@ -1,0 +1,8 @@
+# The Discord library for interacting with the Discord API
+py-cord==2.4.1
+
+# Used to make HTTP requests to our FastAPI backend
+requests
+
+# Used to load environment variables from the .env.bot file
+python-dotenv
