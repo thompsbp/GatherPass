@@ -1,0 +1,9 @@
+{
+  "include": ["api", "bot"],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "venv": ".venv"
+    }
+  ]
+}

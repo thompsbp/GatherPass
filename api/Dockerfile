@@ -1,21 +1,23 @@
-# Use an official Python runtime as a parent image.
-# The 'slim' version is smaller and good for production.
-FROM python:3.10-slim
-
-# Set the working directory inside the container to /app
+# --- Base Stage ---
+# This stage installs dependencies, which are common to both dev and prod.
+# It's defined as 'base' so other stages can build from it.
+FROM python:3.10-slim as base
 WORKDIR /app
-
-# Copy the dependency file first to leverage Docker's layer caching.
-# If requirements don't change, this layer will be reused, speeding up builds.
 COPY requirements.txt .
-
-# Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of your application's source code from the host into the container.
-COPY . .
+# --- Development Stage ---
+# This stage is used when running with docker-compose.override.yml.
+# It builds on 'base' and adds development-specific features.
+FROM base as dev
+# The CMD enables live reloading, which watches for file changes from your mounted volume.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-# The command to run when the container starts.
-# It tells uvicorn to run the 'app' instance from the 'main.py' file.
-# --host 0.0.0.0 makes the server accessible within the Docker network.
+# --- Production Stage ---
+# This is the default stage used by the main docker-compose.yml.
+# It also builds on 'base' but prepares a lean image for production.
+FROM base as prod
+# Copy the application code into the image. This is NOT done in dev, where we use a volume.
+COPY . .
+# The production CMD does NOT use --reload for better performance and stability.
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -4,6 +4,7 @@
 .env.api
 .env.bot
 .env.db
+Caddyfile
 
 # Python virtual environments
 venv/

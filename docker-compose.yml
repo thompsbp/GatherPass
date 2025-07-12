@@ -1,67 +1,74 @@
-version: "3.8"
+# docker-compose.yml
 
-# This file defines the four services that make up the application:
-# 1. caddy: The public-facing web server and reverse proxy.
-# 2. db: The MariaDB database.
-# 3. api: The FastAPI backend application.
-# 4. bot: The Discord bot client.
+version: "3.8"
 
 services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
-      # Expose standard web ports to the host machine.
       - "80:80"
       - "443:443"
     volumes:
-      # Mount the configuration file.
       - ./Caddyfile:/etc/caddy/Caddyfile
-      # Create named volumes for persistent SSL certificates and state.
       - caddy_data:/data
       - caddy_config:/config
     networks:
       - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: mariadb:10.6
     restart: unless-stopped
-    # Load secrets from the .env.db file.
     env_file: .env.db
     volumes:
-      # Create a named volume for persistent database data.
       - db_data:/var/lib/mysql
     networks:
       - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   api:
-    # Build the API image from the ./api directory.
-    build: ./api
+    build:
+      context: ./api
+      target: prod
     restart: unless-stopped
     env_file: .env.api
-    # Ensure the database is started before the API.
     depends_on:
       - db
     networks:
       - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   bot:
-    # Build the bot image from the ./bot directory.
     build: ./bot
     restart: unless-stopped
     env_file: .env.bot
-    # Ensure the API is started before the bot.
     depends_on:
       - api
     networks:
       - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-# Define the shared network for inter-service communication.
 networks:
   app_network:
     driver: bridge
 
-# Define the named volumes for data persistence.
 volumes:
   db_data:
   caddy_data:
