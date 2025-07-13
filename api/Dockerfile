@@ -10,7 +10,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # This stage is used when running with docker-compose.override.yml.
 # It builds on 'base' and adds development-specific features.
 FROM base as dev
-# The CMD enables live reloading, which watches for file changes from your mounted volume.
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
+# The CMD enables live reloading, which watches for file changes from the mounted volume.
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # --- Production Stage ---

@@ -3,14 +3,18 @@
 # ==============================================================================
 # This file contains all authentication and authorization logic.
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+import crud
+from database import get_db
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic_settings import BaseSettings
 from schemas import Actor, TokenData
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class Settings(BaseSettings):
@@ -27,9 +31,6 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Define the two security schemes we'll accept.
-# auto_error=False is crucial. It tells FastAPI not to raise an error
-# if a scheme is missing, allowing our dependency to check for the other one.
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
@@ -48,6 +49,8 @@ def create_access_token(data: dict):
 
 
 async def get_current_actor(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
     api_key: Optional[str] = Depends(api_key_header),
     token: Optional[str] = Depends(oauth2_scheme),
 ) -> Actor:
@@ -55,34 +58,35 @@ async def get_current_actor(
     A single dependency to handle both API Key and JWT authentication.
     This function will be the guard on all protected endpoints.
     """
-    # First, try to validate using the API Key (for the bot)
-    if api_key and api_key == settings.bot_api_key:
-        return Actor(id="bot", is_bot=True)
+    if api_key:
+        if api_key == settings.bot_api_key:
+            return Actor(id="bot", is_bot=True)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Access Denied",
+            )
 
-    # If no valid API Key, try to validate using the JWT (for users)
     if token:
         try:
             payload = jwt.decode(
                 token, settings.jwt_secret_key, algorithms=[settings.algorithm]
             )
-            user_id: str = payload.get("sub")
+            user_id = payload.get("sub")
             if user_id is None:
-                # The token is valid but doesn't contain the user ID.
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token payload",
+                    detail="Access Denied",
                 )
             return Actor(id=f"user:{user_id}", is_bot=False)
         except JWTError:
-            # The token is malformed or expired.
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate token",
+                detail="Access Denied",
             )
 
-    # If neither an API Key nor a JWT was provided or was valid, deny access.
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Not authenticated",
+        detail="Access Denied",
         headers={"WWW-Authenticate": "Bearer"},
     )

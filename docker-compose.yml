@@ -1,25 +1,21 @@
-# docker-compose.yml
-
 version: "3.8"
 
 services:
   caddy:
-    image: caddy:2-alpine
+    build: ./caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     networks:
       - app_network
     logging:
       driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      options: { max-size: "10m", max-file: "3" }
 
   db:
     image: mariadb:10.6
@@ -29,11 +25,24 @@ services:
       - db_data:/var/lib/mysql
     networks:
       - app_network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mariadb-admin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u$$MARIADB_USER",
+          "-p$$MARIADB_PASSWORD",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     logging:
       driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      options: { max-size: "10m", max-file: "3" }
 
   api:
     build:
@@ -42,14 +51,13 @@ services:
     restart: unless-stopped
     env_file: .env.api
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app_network
     logging:
       driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      options: { max-size: "10m", max-file: "3" }
 
   bot:
     build: ./bot
@@ -61,9 +69,7 @@ services:
       - app_network
     logging:
       driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      options: { max-size: "10m", max-file: "3" }
 
 networks:
   app_network:
