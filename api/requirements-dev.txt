@@ -2,4 +2,6 @@ pylint
 black
 isort
 pytest
-
+pytest-asyncio
+aiosqlite
+httpx

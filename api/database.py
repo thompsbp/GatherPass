@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-engine = create_async_engine(settings.database_url)
+engine = create_async_engine(settings.database_url, pool_pre_ping=True)
 
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -40,8 +40,11 @@ async def create_db_and_tables():
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     A FastAPI dependency that provides a database session for a single request.
-    It creates a new session for each request, yields it to the endpoint,
-    and then ensures the session is closed afterward.
+    This version explicitly handles rollbacks on exceptions
     """
     async with async_session_maker() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise

@@ -3,6 +3,8 @@
 # ==============================================================================
 # This file defines the complete database schema as SQLAlchemy ORM models.
 
+import uuid
+
 from database import Base
 from sqlalchemy import (
     INT,
@@ -25,6 +27,9 @@ from sqlalchemy.orm import relationship
 class User(Base):
     __tablename__ = "user"
     id = Column(INT, primary_key=True, autoincrement=True)
+    uuid = Column(
+        String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4())
+    )
     discord_id = Column(BigInteger, unique=True, nullable=False)
     in_game_name = Column(String(255))
     lodestone_id = Column(String(255))
