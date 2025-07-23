@@ -9,6 +9,11 @@ from contextlib import asynccontextmanager
 
 import database
 from fastapi import FastAPI
+from routers import items  # pyright: ignore [reportMissingImports]
+from routers import prizes  # pyright: ignore [reportMissingImports]
+from routers import ranks  # pyright: ignore [reportMissingImports]
+from routers import seasons  # pyright: ignore [reportMissingImports]
+from routers import token  # pyright: ignore [reportMissingImports]
 from routers import users  # pyright: ignore [reportMissingImports]
 
 
@@ -25,7 +30,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # --- Include Routers ---
+app.include_router(items.router)
 app.include_router(users.router)
+app.include_router(seasons.router)
+app.include_router(token.router)
+app.include_router(ranks.router)
+app.include_router(prizes.router)
 
 
 # --- Global Endpoints ---

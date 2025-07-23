@@ -47,10 +47,10 @@ class User(Base):
 class Season(Base):
     __tablename__ = "season"
     id = Column(INT, primary_key=True, autoincrement=True)
-    number = Column(INT)
-    name = Column(String(255))
-    start_date = Column(TIMESTAMP)
-    end_date = Column(TIMESTAMP)
+    number = Column(INT, unique=True, nullable=False)
+    name = Column(String(255), unique=True, nullable=False)
+    start_date = Column(TIMESTAMP, nullable=False)
+    end_date = Column(TIMESTAMP, nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

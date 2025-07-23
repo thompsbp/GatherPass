@@ -134,6 +134,7 @@ async def require_admin_user(
                 discord_id=settings.root_admin_id,
                 admin=True,
             )
+        return user
 
     # Normal Case: Look up the user based on their authenticated identifier.
     if user is None:
