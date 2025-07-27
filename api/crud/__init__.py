@@ -44,6 +44,12 @@ from .seasons import (
     get_seasons,
     update_season,
 )
+from .user_prize_awards import (
+    create_user_prize_award,
+    get_awards_for_user,
+    get_user_prize_award_by_id,
+    update_user_prize_award,
+)
 from .users import (
     ban_user,
     create_user,

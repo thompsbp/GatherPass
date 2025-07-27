@@ -181,3 +181,6 @@ class UserPrizeAward(Base):
     delivered_at = Column(TIMESTAMP, nullable=True)
     delivered_by = Column(BigInteger, nullable=True)
     notes = Column(Text, nullable=True)
+
+    user = relationship("User")
+    season_prize = relationship("SeasonPrize")
