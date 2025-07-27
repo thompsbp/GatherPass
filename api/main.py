@@ -12,6 +12,9 @@ from fastapi import FastAPI
 from routers import items  # pyright: ignore [reportMissingImports]
 from routers import prizes  # pyright: ignore [reportMissingImports]
 from routers import ranks  # pyright: ignore [reportMissingImports]
+from routers import season_items  # pyright: ignore [reportMissingImports]
+from routers import season_ranks  # pyright: ignore [reportMissingImports]
+from routers import season_users  # pyright: ignore [reportMissingImports]
 from routers import seasons  # pyright: ignore [reportMissingImports]
 from routers import token  # pyright: ignore [reportMissingImports]
 from routers import users  # pyright: ignore [reportMissingImports]
@@ -36,6 +39,9 @@ app.include_router(seasons.router)
 app.include_router(token.router)
 app.include_router(ranks.router)
 app.include_router(prizes.router)
+app.include_router(season_items.router)
+app.include_router(season_ranks.router)
+app.include_router(season_users.router)
 
 
 # --- Global Endpoints ---

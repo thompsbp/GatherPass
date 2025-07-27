@@ -114,6 +114,9 @@ class SeasonUser(Base):
     change_requested_by = Column(BigInteger)
     __table_args__ = (UniqueConstraint("user_id", "season_id", name="_user_season_uc"),)
 
+    user = relationship("User")
+    season = relationship("Season")
+
 
 class SeasonItem(Base):
     __tablename__ = "season_item"
@@ -124,6 +127,9 @@ class SeasonItem(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
     __table_args__ = (UniqueConstraint("season_id", "item_id", name="_season_item_uc"),)
+
+    item = relationship("Item")
+    season = relationship("Season")
 
 
 class SeasonRank(Base):
@@ -136,6 +142,9 @@ class SeasonRank(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
     __table_args__ = (UniqueConstraint("season_id", "rank_id", name="_season_rank_uc"),)
+
+    rank = relationship("Rank")
+    season = relationship("Season")
 
 
 class SeasonPrize(Base):
