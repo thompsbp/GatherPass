@@ -153,6 +153,9 @@ class SeasonPrize(Base):
     prize_id = Column(INT, ForeignKey("prize.id"), nullable=False)
     season_rank_id = Column(INT, ForeignKey("season_rank.id"), nullable=False)
 
+    prize = relationship("Prize")
+    season_rank = relationship("SeasonRank")
+
 
 class SeasonUserRank(Base):
     __tablename__ = "season_user_rank"

@@ -18,6 +18,12 @@ from .season_items import (
     remove_item_from_season,
     update_season_item,
 )
+from .season_prizes import (
+    add_prize_to_season_rank,
+    get_prizes_for_season_rank,
+    get_season_prize_by_ids,
+    remove_prize_from_season_rank,
+)
 from .season_ranks import (
     add_rank_to_season,
     get_ranks_for_season,
