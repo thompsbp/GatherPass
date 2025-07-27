@@ -25,6 +25,7 @@ from .season_ranks import (
     remove_rank_from_season,
     update_season_rank,
 )
+from .season_user_ranks import award_rank_to_user, get_user_ranks_for_season
 from .season_users import (
     get_all_users_for_season,
     get_user_progress_in_season,

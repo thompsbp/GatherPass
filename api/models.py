@@ -164,6 +164,9 @@ class SeasonUserRank(Base):
         UniqueConstraint("user_id", "season_rank_id", name="_user_season_rank_uc"),
     )
 
+    user = relationship("User")
+    season_rank = relationship("SeasonRank")
+
 
 class UserPrizeAward(Base):
     __tablename__ = "user_prize_award"
