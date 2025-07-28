@@ -97,6 +97,9 @@ class Submission(Base):
     updated_by = Column(String(255), nullable=False)
     change_requested_by = Column(BigInteger)
 
+    user = relationship("User")
+    season_item = relationship("SeasonItem")
+
 
 # --- Join & Tracking Tables ---
 

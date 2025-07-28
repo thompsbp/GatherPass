@@ -44,6 +44,7 @@ from .seasons import (
     get_seasons,
     update_season,
 )
+from .submissions import create_submission, get_submissions_for_user_in_season
 from .user_prize_awards import (
     create_user_prize_award,
     get_awards_for_user,

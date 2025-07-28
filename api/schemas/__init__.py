@@ -14,6 +14,7 @@ from .season_ranks import SeasonRank, SeasonRankCreate, SeasonRankUpdate
 from .season_user_ranks import SeasonUserRank, SeasonUserRankCreate
 from .season_users import SeasonUser, SeasonUserCreate
 from .seasons import Season, SeasonCreate, SeasonUpdate
+from .submissions import Submission, SubmissionCreate
 from .user_prize_awards import (
     UserPrizeAward,
     UserPrizeAwardCreate,
