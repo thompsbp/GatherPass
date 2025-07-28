@@ -40,6 +40,8 @@ from .season_users import (
 from .seasons import (
     create_season,
     delete_season,
+    get_current_season,
+    get_latest_season,
     get_season_by_id,
     get_seasons,
     update_season,

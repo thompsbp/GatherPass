@@ -36,11 +36,37 @@ async def get_season_by_id(db: AsyncSession, season_id: int) -> models.Season | 
 
 
 async def get_seasons(
-    db: AsyncSession, offset: int = 0, limit: int = 100
+    db: AsyncSession, offset: int = 0, limit: int = 100, name: str | None = None
 ) -> list[models.Season]:
-    """Retrieves a list of all seasons with pagination."""
-    result = await db.execute(select(models.Season).offset(offset).limit(limit))
+    """Retrieves a list of all seasons with pagination and optional name filtering."""
+    query = select(models.Season)
+
+    if name:
+        query = query.filter(models.Season.name.ilike(f"{name}%"))
+
+    query = query.offset(offset).limit(limit)
+
+    result = await db.execute(query)
     return list(result.scalars().all())
+
+
+async def get_current_season(db: AsyncSession) -> models.Season | None:
+    """Retrieves the currently active season based on the current date."""
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(models.Season).filter(
+            models.Season.start_date <= now, models.Season.end_date >= now
+        )
+    )
+    return result.scalars().first()
+
+
+async def get_latest_season(db: AsyncSession) -> models.Season | None:
+    """Retrieves the season with the highest number."""
+    result = await db.execute(
+        select(models.Season).order_by(models.Season.number.desc())
+    )
+    return result.scalars().first()
 
 
 async def update_season(

@@ -34,10 +34,17 @@ async def get_user_by_discord_id(
 
 
 async def get_users(
-    db: AsyncSession, offset: int = 0, limit: int = 100
+    db: AsyncSession, offset: int = 0, limit: int = 100, in_game_name: str | None = None
 ) -> list[models.User]:
-    """Retrieves a list of users with pagination."""
-    result = await db.execute(select(models.User).offset(offset).limit(limit))
+    """Retrieves a list of users with pagination and optional name filtering."""
+    query = select(models.User)
+
+    if in_game_name:
+        query = query.filter(models.User.in_game_name.like(f"{in_game_name}%"))
+
+    query = query.offset(offset).limit(limit)
+
+    result = await db.execute(query)
     return list(result.scalars().all())
 
 

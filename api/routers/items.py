@@ -39,11 +39,12 @@ async def handle_create_item(
 async def handle_get_items(
     offset: int = 0,
     limit: int = 100,
+    name: str | None = None,  # Add the optional query parameter
     registered_user: models.User = Depends(require_registered_user),
     db: AsyncSession = Depends(get_db),
 ):
     """(Registered Users) Retrieves a list of all items."""
-    return await crud.get_items(db, offset=offset, limit=limit)
+    return await crud.get_items(db, offset=offset, limit=limit, name=name)
 
 
 @router.get("/{item_id}", response_model=schemas.Item)

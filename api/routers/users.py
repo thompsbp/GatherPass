@@ -41,11 +41,14 @@ async def handle_create_user(
 async def handle_get_users(
     offset: int = 0,
     limit: int = 100,
+    in_game_name: str | None = None,
     acting_admin: models.User = Depends(require_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """(Admin) Gets a list of all users."""
-    return await crud.get_users(db, offset=offset, limit=limit)
+    return await crud.get_users(
+        db, offset=offset, limit=limit, in_game_name=in_game_name
+    )
 
 
 @router.get("/{user_id}", response_model=schemas.User)

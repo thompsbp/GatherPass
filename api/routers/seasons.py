@@ -33,11 +33,36 @@ async def handle_create_season(
 async def handle_get_seasons(
     offset: int = 0,
     limit: int = 100,
+    name: str | None = None,
     registered_user: models.User = Depends(require_registered_user),
     db: AsyncSession = Depends(get_db),
 ):
     """(Admin) Retrieves a list of all seasons."""
-    return await crud.get_seasons(db, offset=offset, limit=limit)
+    return await crud.get_seasons(db, offset=offset, limit=limit, name=name)
+
+
+@router.get("/current", response_model=schemas.Season)
+async def handle_get_current_season(
+    registered_user: models.User = Depends(require_registered_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """(Registered Users) Retrieves the currently active season."""
+    current_season = await crud.get_current_season(db)
+    if current_season is None:
+        raise HTTPException(status_code=404, detail="No active season found.")
+    return current_season
+
+
+@router.get("/latest", response_model=schemas.Season)
+async def handle_get_latest_season(
+    registered_user: models.User = Depends(require_registered_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """(Registered Users) Retrieves the season with the highest number."""
+    latest_season = await crud.get_latest_season(db)
+    if latest_season is None:
+        raise HTTPException(status_code=404, detail="No seasons found.")
+    return latest_season
 
 
 @router.get("/{season_id}", response_model=schemas.Season)

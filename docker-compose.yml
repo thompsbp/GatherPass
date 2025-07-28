@@ -60,6 +60,8 @@ services:
       dockerfile: ./bot/Dockerfile
     restart: unless-stopped
     env_file: .env.bot
+    environment:
+      PYTHONUNBUFFERED: "1"
     depends_on:
       - api
     networks:

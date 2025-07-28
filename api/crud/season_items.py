@@ -69,13 +69,17 @@ async def get_items_for_season(
     db: AsyncSession, season_id: int
 ) -> list[models.SeasonItem]:
     """
-    Retrieves a list of all items associated with a specific season.
+    Retrieves a list of all items associated with a specific season,
+    sorted alphabetically by the item's name.
     """
     result = await db.execute(
         select(models.SeasonItem)
+        .join(models.Item)  # Join with the Item table to access its columns
         .filter(models.SeasonItem.season_id == season_id)
+        .order_by(models.Item.name.asc())  # Sort by the item's name
         .options(
-            selectinload(models.SeasonItem.item), selectinload(models.SeasonItem.season)
+            selectinload(models.SeasonItem.item),
+            selectinload(models.SeasonItem.season),
         )
     )
     return list(result.scalars().all())

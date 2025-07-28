@@ -36,10 +36,18 @@ async def get_item_by_id(db: AsyncSession, item_id: int) -> models.Item | None:
 
 
 async def get_items(
-    db: AsyncSession, offset: int = 0, limit: int = 100
+    db: AsyncSession, offset: int = 0, limit: int = 100, name: str | None = None
 ) -> list[models.Item]:
-    """Retrieves a list of all items with pagination."""
-    result = await db.execute(select(models.Item).offset(offset).limit(limit))
+    """Retrieves a list of all items with pagination and optional name filtering."""
+    query = select(models.Item)
+
+    # If a name is provided, add a WHERE clause to filter for names that start with it
+    if name:
+        query = query.filter(models.Item.name.ilike(f"%{name}%"))
+
+    query = query.offset(offset).limit(limit)
+
+    result = await db.execute(query)
     return list(result.scalars().all())
 
 

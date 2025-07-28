@@ -112,12 +112,10 @@ class UserCog(commands.Cog):
 
             admin_channel = self.bot.get_channel(self.admin_channel_id)
             if admin_channel:
-                print("HERE")
                 lodestone_link = (
-                    f"{self.bot.lodestone_base_url}{new_user['lodestone_id']}"
+                    f"{self.bot.lodestone_base_url}character/{new_user['lodestone_id']}"
                 )
 
-                print("HERE2")
                 log_message = (
                     f"@here New User Registration:\n\n"
                     f"**User:** {ctx.author.mention}\n"
@@ -125,7 +123,6 @@ class UserCog(commands.Cog):
                     f"**Lodestone:** <{lodestone_link}>\n\n"
                     f"This user is awaiting verification."
                 )
-                print("HERE3")
                 await admin_channel.send(log_message)
 
         except httpx.HTTPStatusError as e:
@@ -140,6 +137,189 @@ class UserCog(commands.Cog):
                 ephemeral=True,
             )
             print(f"An unexpected error occurred in /register command: {e}")
+
+    async def search_users(self, ctx: discord.AutocompleteContext):
+        """
+        This is the autocomplete function. It gets called as the admin types in
+        the 'user' option of the /verify command.
+        """
+        # Get what the user has typed so far
+        query = ctx.value
+
+        # Don't hit the API if the query is empty
+        if not query:
+            return []
+
+        try:
+            # Create an auth provider for the user running the command
+            auth_provider = BotAuth(
+                api_key=self.bot_api_key, user_discord_id=ctx.interaction.user.id
+            )
+
+            # Call the API to get a list of matching users
+            user_list = await self.api_client.get_users(
+                auth=auth_provider, name_query=query
+            )
+
+            # Format the results for Discord's autocomplete list.
+            # We display the name, but the value that gets sent is the user's ID.
+            return [
+                discord.OptionChoice(
+                    name=user["in_game_name"], value=str(user["discord_id"])
+                )
+                for user in user_list
+            ]
+        except Exception:
+            # If the API call fails for any reason, return an empty list
+            return []
+
+    @commands.slash_command(
+        name="verify", description="Verify a newly registered user."
+    )
+    async def verify(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Option(
+            str,
+            "The user to verify (start typing their in-game name).",
+            autocomplete=search_users,
+        ),
+    ):
+        """
+        (Admin-Only) Verifies a user, changing their status from 'pending' to 'verified'.
+        """
+        await ctx.defer(ephemeral=True)
+
+        try:
+            # The 'user' variable is the discord_id string from the autocomplete choice.
+            # We need to find the user's internal API ID to make the update call.
+            target_discord_id = int(user)
+            auth_provider = BotAuth(
+                api_key=self.bot_api_key, user_discord_id=ctx.author.id
+            )
+
+            # This is a bit inefficient, but we need to get the full user list
+            # to find the internal ID corresponding to the discord ID.
+            user_list = await self.api_client.get_users(auth=auth_provider)
+            target_user = next(
+                (u for u in user_list if u["discord_id"] == target_discord_id), None
+            )
+
+            if not target_user:
+                await ctx.respond(
+                    f"❌ Could not find a user with the Discord ID `{target_discord_id}`.",
+                    ephemeral=True,
+                )
+                return
+
+            if target_user["status"] == "verified":
+                await ctx.respond(
+                    f"☑️ User **{target_user['in_game_name']}** is already verified.",
+                    ephemeral=True,
+                )
+                return
+
+            # Now, call the update method using the user's internal ID
+            updated_user = await self.api_client.update_user(
+                auth=auth_provider, user_id=target_user["id"], status="verified"
+            )
+
+            success_message = f"✅ User **{updated_user['in_game_name']}** has been successfully verified!"
+            await ctx.respond(success_message, ephemeral=True)
+
+            # Log the action to the admin channel
+            admin_channel = self.bot.get_channel(self.admin_channel_id)
+            if admin_channel:
+                await admin_channel.send(
+                    f"👍 {ctx.author.mention} verified the user **{updated_user['in_game_name']}**."
+                )
+
+        except httpx.HTTPStatusError as e:
+            error_message = e.response.json().get(
+                "detail", "An unknown API error occurred."
+            )
+            await ctx.respond(f"❌ **Error:** {error_message}", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(
+                "❌ **Error:** An unexpected error occurred.", ephemeral=True
+            )
+            print(f"An unexpected error in /verify command: {e}")
+
+    @commands.slash_command(
+        name="promote_admin", description="Promote a verified user to admin."
+    )
+    async def promote_admin(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Option(
+            str,
+            "The user to promote (start typing their in-game name).",
+            autocomplete=search_users,  # We reuse the same autocomplete function
+        ),
+    ):
+        """
+        (Admin-Only) Promotes a user, giving them admin privileges.
+        """
+        await ctx.defer(ephemeral=True)
+
+        try:
+            target_discord_id = int(user)
+            auth_provider = BotAuth(
+                api_key=self.bot_api_key, user_discord_id=ctx.author.id
+            )
+
+            # Find the target user in the database to get their internal ID
+            user_list = await self.api_client.get_users(auth=auth_provider)
+            target_user = next(
+                (u for u in user_list if u["discord_id"] == target_discord_id), None
+            )
+
+            if not target_user:
+                await ctx.respond(
+                    f"❌ Could not find a user with the Discord ID `{target_discord_id}`.",
+                    ephemeral=True,
+                )
+                return
+
+            if target_user["status"] != "verified":
+                await ctx.respond(
+                    f"⚠️ User **{target_user['in_game_name']}** must be verified before they can be promoted.",
+                    ephemeral=True,
+                )
+                return
+
+            if target_user["admin"] is True:
+                await ctx.respond(
+                    f"☑️ User **{target_user['in_game_name']}** is already an admin.",
+                    ephemeral=True,
+                )
+                return
+
+            # Call the update method using the user's internal API ID
+            updated_user = await self.api_client.update_user(
+                auth=auth_provider, user_id=target_user["id"], is_admin=True
+            )
+
+            success_message = f"✅ User **{updated_user['in_game_name']}** has been successfully promoted to admin!"
+            await ctx.respond(success_message, ephemeral=True)
+
+            # Log the action to the admin channel
+            admin_channel = self.bot.get_channel(self.admin_channel_id)
+            if admin_channel:
+                await admin_channel.send(
+                    f"👑 {ctx.author.mention} promoted **{updated_user['in_game_name']}** to admin."
+                )
+
+        except httpx.HTTPStatusError as e:
+            error_message = e.response.json().get(
+                "detail", "An unknown API error occurred."
+            )
+            await ctx.respond(f"❌ **Error:** {error_message}", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(
+                "❌ **Error:** An unexpected error occurred.", ephemeral=True
+            )
+            print(f"An unexpected error in /promote_admin command: {e}")
 
 
 def setup(bot: discord.Bot):

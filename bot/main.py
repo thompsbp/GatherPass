@@ -17,7 +17,7 @@ DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 ADMIN_CHANNEL_ID = int(os.getenv("ADMIN_CHANNEL_ID"))
 API_URL = os.getenv("API_URL")
 BOT_API_KEY = os.getenv("BOT_API_KEY")
-LODESTONE_BASE_URL = "https://na.finalfantasyxiv.com/lodestone/character/"
+LODESTONE_BASE_URL = "https://na.finalfantasyxiv.com/lodestone/"
 
 # --- Bot Setup ---
 intents = discord.Intents.default()
