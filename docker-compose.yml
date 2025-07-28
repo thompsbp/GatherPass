@@ -28,13 +28,8 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "mariadb-admin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u$$MARIADB_USER",
-          "-p$$MARIADB_PASSWORD",
+          "CMD-SHELL",
+          "mariadb-admin ping -h localhost -u$$MARIADB_USER -p$$MARIADB_PASSWORD",
         ]
       interval: 10s
       timeout: 5s
@@ -60,7 +55,9 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
   bot:
-    build: ./bot
+    build:
+      context: .
+      dockerfile: ./bot/Dockerfile
     restart: unless-stopped
     env_file: .env.bot
     depends_on:

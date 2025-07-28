@@ -158,3 +158,19 @@ async def require_admin_user(
         raise HTTPException(status_code=403, detail="Admin privileges required")
 
     return user
+
+
+async def require_bot_auth(
+    api_key: Optional[str] = Depends(api_key_header),
+) -> bool:
+    """
+    A simple dependency that requires the request to have the bot's secret
+    API key. Returns True if authenticated, otherwise raises an error.
+    """
+    if api_key and api_key == settings.bot_api_key:
+        return True
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="This action can only be performed by the bot.",
+    )

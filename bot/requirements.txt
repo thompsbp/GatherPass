@@ -1,3 +1,12 @@
+# The Discord library
 py-cord==2.4.1
-requests
+
+# For loading .env files
 python-dotenv
+
+# Async HTTP client
+httpx
+
+# Install our local API client package from the directory inside the container
+./api_client
+

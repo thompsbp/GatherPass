@@ -30,6 +30,7 @@ class User(BaseModel):
     uuid: str
     discord_id: int
     in_game_name: Optional[str]
+    lodestone_id: str
     status: str
     admin: bool
 

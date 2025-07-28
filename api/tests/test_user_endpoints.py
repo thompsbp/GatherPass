@@ -51,13 +51,12 @@ async def test_create_user_fail_unauthorized(test_client, async_db_session):
             "lodestone_id": "123",
         },
     )
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_create_user_fail_validation(test_client, async_db_session):
     """(Validation) Tests creating a user with improperly formatted data."""
-    # --- FIX: Added async_db_session fixture to ensure tables are created ---
     response = await test_client.post(
         "/users/",
         headers={
@@ -86,13 +85,13 @@ async def test_create_user_fail_duplicate(test_client, async_db_session):
             "X-User-Discord-ID": str(settings.root_admin_id),
         },
         json={
-            "discord_id": 112233,  # This ID already exists
+            "discord_id": 112233,
             "in_game_name": "Duplicate",
             "lodestone_id": "2",
         },
     )
     assert response.status_code == 400
-    assert "already exists" in response.json()["detail"]
+    assert "already registered" in response.json()["detail"]
 
 
 # --- Tests for GET /users/ ---
@@ -230,3 +229,32 @@ async def test_delete_user_success(test_client, async_db_session):
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "banned"
+
+    @pytest.mark.asyncio
+    async def test_create_user_fail_with_jwt(test_client, async_db_session):
+        """
+        (Authorization) Tests that a user with a JWT cannot create another user,
+        proving the endpoint is truly bot-only.
+        """
+        # Create a user to act as the requester (in this case, an admin)
+        admin_user = create_test_user(9, is_admin=True)
+        async_db_session.add(admin_user)
+        await async_db_session.commit()
+        await async_db_session.refresh(admin_user)
+
+        # Get a valid JWT for the admin
+        token = create_access_token(data={"sub": admin_user.uuid})
+
+        # Attempt to create a new user using the JWT
+        response = await test_client.post(
+            "/users/",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "discord_id": 10,
+                "in_game_name": "Test JWT Create",
+                "lodestone_id": "10",
+            },
+        )
+
+        # The request should be forbidden because the endpoint requires the bot's API key.
+        assert response.status_code == 403

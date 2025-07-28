@@ -8,7 +8,7 @@ from typing import List
 import crud
 import models
 import schemas
-from auth import require_admin_user  # Use the new admin dependency
+from auth import require_admin_user, require_bot_auth
 from database import get_db
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,17 +22,19 @@ router = APIRouter(
 @router.post("/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 async def handle_create_user(
     user_data: schemas.UserCreate,
-    acting_admin: models.User = Depends(require_admin_user),
+    is_bot_authenticated: bool = Depends(require_bot_auth),
     db: AsyncSession = Depends(get_db),
 ):
-    """(Admin) Registers a new user, or allows the root admin to register themself."""
+    """(Bot-Only) Registers a new user."""
     db_user = await crud.get_user_by_discord_id(db, discord_id=user_data.discord_id)
     if db_user:
         raise HTTPException(
             status_code=400,
-            detail="A user with this Discord ID already exists.",
+            detail="A user with this Discord ID is already registered.",
         )
-    return await crud.create_user(db=db, user_data=user_data, actor=acting_admin)
+
+    bot_actor = schemas.Actor(id="bot", is_bot=True)
+    return await crud.create_user(db=db, user_data=user_data, actor=bot_actor)
 
 
 @router.get("/", response_model=List[schemas.User])
