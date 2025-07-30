@@ -3,7 +3,7 @@
 # ==============================================================================
 # This file contains the nested API endpoints for managing user participation
 # and progress within a season.
-from typing import List
+from typing import List, Optional
 
 import crud
 import models
@@ -28,34 +28,39 @@ async def handle_register_user_for_season(
 ):
     """
     Registers a user for a specific season.
-    - If `user_id` is provided, the requester must be an admin.
-    - If `user_id` is omitted, the requester registers themself.
+    - If `user_id` or `discord_id` is provided, the requester must be an admin.
+    - If the payload is empty, the requester registers themself.
     """
-    current_user_id = current_user.id
+    user_to_register: Optional[models.User] = None
 
-    user_id_to_register: int
-
-    if user_data.user_id is None:
-        # Case 1: user_id is omitted. The user is registering themself.
-        user_id_to_register = current_user_id
+    if user_data.user_id is not None:
+        user_to_register = await crud.get_user_by_id(db, user_id=user_data.user_id)
+    elif user_data.discord_id is not None:
+        user_to_register = await crud.get_user_by_discord_id(
+            db, discord_id=user_data.discord_id
+        )
     else:
-        # Case 2: user_id is provided. Requester must be an admin or acting on themself.
-        if not (current_user.admin is True or current_user_id == user_data.user_id):
-            raise HTTPException(
-                status_code=403,
-                detail="Not authorized to register another user for a season.",
-            )
-        user_id_to_register = user_data.user_id
+        user_to_register = current_user
 
-    season = await crud.get_season_by_id(db, season_id=season_id)
-    if not season:
-        raise HTTPException(status_code=404, detail="Season not found")
-    user_to_register = await crud.get_user_by_id(db, user_id=user_id_to_register)
     if not user_to_register:
         raise HTTPException(status_code=404, detail="User to be registered not found")
 
+    if not (
+        current_user.admin is True or int(current_user.id) == int(user_to_register.id)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to register another user for a season.",
+        )
+
+    # 3. Ensure the season exists
+    season = await crud.get_season_by_id(db, season_id=season_id)
+    if not season:
+        raise HTTPException(status_code=404, detail="Season not found")
+
+    # 4. Perform the registration
     new_season_user = await crud.register_user_for_season(
-        db, season_id=season_id, user_id=user_id_to_register, actor=current_user
+        db, season_id=season_id, user_id=int(user_to_register.id), actor=current_user
     )
     if new_season_user is None:
         raise HTTPException(

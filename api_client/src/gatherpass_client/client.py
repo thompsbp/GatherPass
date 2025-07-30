@@ -242,3 +242,40 @@ class APIClient:
                 return response.json()
         except httpx.HTTPStatusError as e:
             raise e
+
+    # --- Season User ---
+    async def register_user_for_season(
+        self,
+        auth: AuthStrategy,
+        season_id: int,
+        user_id: int | None = None,
+        discord_id: int | None = None,
+    ):
+        """
+        Registers a user for a specific season.
+        - Providing user_id or discord_id registers a specific user (admin action).
+        - Providing no ID registers the authenticated user (self-registration).
+        """
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        payload = {}
+        if user_id is not None:
+            payload["user_id"] = user_id
+        elif discord_id is not None:
+            payload["discord_id"] = discord_id
+
+        # If neither is provided, an empty payload {} is sent, which the API
+        # interprets as a self-registration request.
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/seasons/{season_id}/users",
+                    headers=headers,
+                    json=payload,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e

@@ -33,13 +33,8 @@ async def add_item_to_season(
     db.add(new_season_item)
     await db.commit()
 
-    # --- The Permanent Fix ---
-    # After committing, we must refresh the object to load its database state
-    # (like the auto-generated ID) before we can use it again.
     await db.refresh(new_season_item)
 
-    # Now that the object is "live", we can re-fetch it with its relationships
-    # loaded for the API response.
     result = await db.execute(
         select(models.SeasonItem)
         .filter(models.SeasonItem.id == new_season_item.id)
@@ -48,9 +43,6 @@ async def add_item_to_season(
         )
     )
     return result.scalars().one()
-
-
-# ... (The rest of the functions in this file are correct and do not need to be changed) ...
 
 
 async def get_season_item_by_ids(
@@ -74,9 +66,9 @@ async def get_items_for_season(
     """
     result = await db.execute(
         select(models.SeasonItem)
-        .join(models.Item)  # Join with the Item table to access its columns
+        .join(models.Item)
         .filter(models.SeasonItem.season_id == season_id)
-        .order_by(models.Item.name.asc())  # Sort by the item's name
+        .order_by(models.Item.name.asc())
         .options(
             selectinload(models.SeasonItem.item),
             selectinload(models.SeasonItem.season),
