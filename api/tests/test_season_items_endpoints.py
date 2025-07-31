@@ -124,7 +124,6 @@ async def test_add_item_to_season_fail_duplicate(test_client, async_db_session):
     async_db_session.add_all([admin_user, season, item])
     await async_db_session.commit()
 
-    # --- The Definitive Fix: Refresh objects after commit ---
     await async_db_session.refresh(admin_user)
     await async_db_session.refresh(season)
     await async_db_session.refresh(item)

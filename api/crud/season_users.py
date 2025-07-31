@@ -32,13 +32,8 @@ async def register_user_for_season(
     db.add(new_season_user)
     await db.commit()
 
-    # --- The Permanent Fix ---
-    # After committing, we must refresh the object to load its database state
-    # (like the auto-generated ID) before we can use it again.
     await db.refresh(new_season_user)
 
-    # Now that the object is "live", we can re-fetch it with its relationships
-    # loaded for the API response.
     result = await db.execute(
         select(models.SeasonUser)
         .filter(models.SeasonUser.id == new_season_user.id)

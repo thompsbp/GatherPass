@@ -3,6 +3,7 @@
 # ==============================================================================
 # This file contains all the database functions (CRUD) for the Season model.
 
+from datetime import datetime, timezone
 from typing import Union
 
 import models
@@ -51,14 +52,35 @@ async def get_seasons(
 
 
 async def get_current_season(db: AsyncSession) -> models.Season | None:
-    """Retrieves the currently active season based on the current date."""
+    """
+    Retrieves the currently active season. If no season is currently active,
+    it retrieves the one that finished most recently. It will not select a
+    season that is in the future.
+    """
     now = datetime.now(timezone.utc)
-    result = await db.execute(
+
+    # First, try to find a currently active season (start_date <= now <= end_date)
+    current_season_result = await db.execute(
         select(models.Season).filter(
             models.Season.start_date <= now, models.Season.end_date >= now
         )
     )
-    return result.scalars().first()
+    current_season = current_season_result.scalars().first()
+
+    if current_season:
+        return current_season
+
+    # If no season is active, find the most recently finished one
+    most_recent_finished_result = await db.execute(
+        select(models.Season)
+        .filter(
+            models.Season.end_date < now
+        )  # Find all seasons that have already ended
+        .order_by(
+            models.Season.end_date.desc()
+        )  # Order by end date to get the newest one first
+    )
+    return most_recent_finished_result.scalars().first()
 
 
 async def get_latest_season(db: AsyncSession) -> models.Season | None:

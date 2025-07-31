@@ -78,7 +78,7 @@ class Prize(Base):
     id = Column(INT, primary_key=True, autoincrement=True)
     description = Column(String(255))
     value = Column(INT)
-    lodestone_id = Column(INT)
+    lodestone_id = Column(String(255))
     discord_role = Column(BigInteger)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

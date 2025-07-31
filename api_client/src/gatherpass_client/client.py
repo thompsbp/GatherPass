@@ -177,7 +177,7 @@ class APIClient:
             raise e
 
     async def get_current_season(self, auth: AuthStrategy):
-        """Fetches the season with the highest number from the API."""
+        """Fetches the currently active or most recently finished season."""
         headers = {"Content-Type": "application/json"}
         headers.update(auth.get_headers())
 
@@ -185,6 +185,29 @@ class APIClient:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{self.base_url}/seasons/current", headers=headers
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    async def create_submission(
+        self, auth: AuthStrategy, user_id: int, season_item_id: int, quantity: int
+    ):
+        """Creates a new submission record via the API."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        payload = {
+            "user_id": user_id,
+            "season_item_id": season_item_id,
+            "quantity": quantity,
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/submissions/", headers=headers, json=payload
                 )
                 response.raise_for_status()
                 return response.json()
@@ -274,6 +297,70 @@ class APIClient:
                     f"{self.base_url}/seasons/{season_id}/users",
                     headers=headers,
                     json=payload,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    async def get_season_users(self, auth: AuthStrategy, season_id: int):
+        """Fetches all users registered for a specific season (the leaderboard)."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/seasons/{season_id}/users", headers=headers
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    # --- Season Ranks ---
+    async def get_season_ranks(self, auth: AuthStrategy, season_id: int):
+        """Fetches all ranks for a specific season, sorted by number."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/seasons/{season_id}/ranks", headers=headers
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    # --- Season Prizes ---
+    async def get_season_prizes(self, auth: AuthStrategy, season_id: int):
+        """Fetches all prizes for a specific season."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/seasons/{season_id}/prizes", headers=headers
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    # --- Promotions ---
+    async def check_promotions(self, auth: AuthStrategy, season_id: int):
+        """Fetches a list of users eligible for promotion in a given season."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/seasons/{season_id}/promotion-candidates",
+                    headers=headers,
                 )
                 response.raise_for_status()
                 return response.json()

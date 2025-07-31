@@ -20,6 +20,7 @@ from .season_items import (
 )
 from .season_prizes import (
     add_prize_to_season_rank,
+    get_prizes_for_season,
     get_prizes_for_season_rank,
     get_season_prize_by_ids,
     remove_prize_from_season_rank,
@@ -31,7 +32,11 @@ from .season_ranks import (
     remove_rank_from_season,
     update_season_rank,
 )
-from .season_user_ranks import award_rank_to_user, get_user_ranks_for_season
+from .season_user_ranks import (
+    award_rank_to_user,
+    get_all_awarded_ranks_for_season,
+    get_user_ranks_for_season,
+)
 from .season_users import (
     get_all_users_for_season,
     get_user_progress_in_season,

@@ -115,7 +115,6 @@ async def test_user_registers_another_user_fail(test_client, async_db_session):
     async_db_session.add_all([user_a, user_b, season])
     await async_db_session.commit()
 
-    # --- The Definitive Fix: Refresh all objects after commit ---
     await async_db_session.refresh(user_a)
     await async_db_session.refresh(user_b)
     await async_db_session.refresh(season)

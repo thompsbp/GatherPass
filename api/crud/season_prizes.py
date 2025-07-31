@@ -34,7 +34,6 @@ async def add_prize_to_season_rank(
     await db.commit()
     await db.refresh(new_season_prize)
 
-    # Re-fetch with relationships eagerly loaded for the API response
     result = await db.execute(
         select(models.SeasonPrize)
         .filter(models.SeasonPrize.id == new_season_prize.id)
@@ -61,6 +60,32 @@ async def get_season_prize_by_ids(
         )
     )
     return result.scalars().first()
+
+
+async def get_prizes_for_season(
+    db: AsyncSession, season_id: int
+) -> list[models.SeasonPrize]:
+    """
+    Retrieves a list of all prizes for a specific season, sorted by
+    rank number and then by prize description.
+    """
+    result = await db.execute(
+        select(models.SeasonPrize)
+        .join(models.SeasonRank)
+        .join(models.Prize)
+        .filter(models.SeasonRank.season_id == season_id)
+        .order_by(models.SeasonRank.number.asc(), models.Prize.description.asc())
+        .options(
+            selectinload(models.SeasonPrize.prize),
+            selectinload(models.SeasonPrize.season_rank).selectinload(
+                models.SeasonRank.rank
+            ),
+            selectinload(models.SeasonPrize.season_rank).selectinload(
+                models.SeasonRank.season
+            ),
+        )
+    )
+    return list(result.scalars().all())
 
 
 async def get_prizes_for_season_rank(

@@ -53,12 +53,10 @@ async def handle_register_user_for_season(
             detail="Not authorized to register another user for a season.",
         )
 
-    # 3. Ensure the season exists
     season = await crud.get_season_by_id(db, season_id=season_id)
     if not season:
         raise HTTPException(status_code=404, detail="Season not found")
 
-    # 4. Perform the registration
     new_season_user = await crud.register_user_for_season(
         db, season_id=season_id, user_id=int(user_to_register.id), actor=current_user
     )

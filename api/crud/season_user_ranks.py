@@ -33,7 +33,7 @@ async def award_rank_to_user(
     await db.commit()
 
     await db.refresh(new_award)
-    new_award_id = new_award.id  # Now it's safe to access the ID.
+    new_award_id = new_award.id
 
     result = await db.execute(
         select(models.SeasonUserRank)
@@ -73,5 +73,19 @@ async def get_user_ranks_for_season(
                 models.SeasonRank.season
             ),
         )
+    )
+    return list(result.scalars().all())
+
+
+async def get_all_awarded_ranks_for_season(
+    db: AsyncSession, season_id: int
+) -> list[models.SeasonUserRank]:
+    """
+    Retrieves all rank awards for all users within a specific season.
+    """
+    result = await db.execute(
+        select(models.SeasonUserRank)
+        .join(models.SeasonRank)
+        .filter(models.SeasonRank.season_id == season_id)
     )
     return list(result.scalars().all())

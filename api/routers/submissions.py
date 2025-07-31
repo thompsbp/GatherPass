@@ -8,18 +8,16 @@ from typing import List
 import crud
 import models
 import schemas
-from auth import require_registered_user
+from auth import require_admin_user, require_registered_user
 from database import get_db
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Router for the primary action of creating a submission
 router = APIRouter(
     prefix="/submissions",
     tags=["Submissions"],
 )
 
-# A second router for the nested GET endpoint to view a user's history
 user_season_submissions_router = APIRouter(
     prefix="/users/{user_id}/seasons/{season_id}/submissions",
     tags=["Submissions"],
@@ -29,25 +27,14 @@ user_season_submissions_router = APIRouter(
 @router.post("/", response_model=schemas.Submission)
 async def handle_create_submission(
     submission_data: schemas.SubmissionCreate,
-    current_user: models.User = Depends(require_registered_user),
+    admin_user: models.User = Depends(require_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Creates a new submission for a user.
-    - A regular user can only submit for themself.
-    - An admin can submit on behalf of any user.
+    (Admin-Only) Creates a new submission for a user.
     """
-    # Authorization: Ensure the user is either an admin or is submitting for themself.
-    if not (
-        current_user.admin is True or int(current_user.id) == submission_data.user_id
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Not authorized to create a submission for another user.",
-        )
-
     new_submission = await crud.create_submission(
-        db, submission_data=submission_data, actor=current_user
+        db, submission_data=submission_data, actor=admin_user
     )
 
     if new_submission is None:

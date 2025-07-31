@@ -134,8 +134,9 @@ class SeasonItemCog(commands.Cog):
         ctx: discord.ApplicationContext,
         season: discord.Option(
             str,
-            "The season to view items for (start typing to search).",
+            "Optional: The season to view. Defaults to the current season.",
             autocomplete=search_seasons,
+            required=False,  # --- This makes the option optional ---
         ),
     ):
         """(Registered Users) Fetches and displays all items for a given season."""
@@ -143,7 +144,28 @@ class SeasonItemCog(commands.Cog):
 
         try:
             auth = BotAuth(api_key=self.bot_api_key, user_discord_id=ctx.author.id)
-            target_season_id = int(season)
+
+            target_season_id: int
+            target_season_name: str
+
+            if season:
+                # If a season was chosen, use its ID
+                target_season_id = int(season)
+                # We need to fetch the season details to get its name for the title
+                all_seasons = await self.api_client.get_seasons(auth=auth)
+                target_season = next(
+                    (s for s in all_seasons if s["id"] == target_season_id), None
+                )
+                target_season_name = (
+                    target_season["name"]
+                    if target_season
+                    else f"Season ID {target_season_id}"
+                )
+            else:
+                # If no season was chosen, get the current/default season
+                current_season = await self.api_client.get_current_season(auth=auth)
+                target_season_id = current_season["id"]
+                target_season_name = current_season["name"]
 
             item_list = await self.api_client.get_items_for_season(
                 auth=auth, season_id=target_season_id
@@ -151,11 +173,11 @@ class SeasonItemCog(commands.Cog):
 
             if not item_list:
                 await ctx.respond(
-                    "No items have been added to this season yet.", ephemeral=True
+                    f"No items have been added to **{target_season_name}** yet.",
+                    ephemeral=True,
                 )
                 return
 
-            # Get the season name from the first item for the title
             season_name = item_list[0]["season"]["name"]
 
             item_pages = []

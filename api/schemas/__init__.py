@@ -7,6 +7,7 @@
 from .auth import Actor, Token, TokenData, TokenRequest
 from .items import Item, ItemCreate, ItemUpdate
 from .prizes import Prize, PrizeCreate, PrizeUpdate
+from .promotions import PromotionCandidate
 from .ranks import Rank, RankCreate, RankUpdate
 from .season_items import SeasonItem, SeasonItemCreate, SeasonItemUpdate
 from .season_prizes import SeasonPrize, SeasonPrizeCreate

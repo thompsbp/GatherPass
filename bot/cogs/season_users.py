@@ -5,7 +5,7 @@
 
 import discord
 import httpx
-from discord.ext import commands
+from discord.ext import commands, pages
 from gatherpass_client import APIClient
 from gatherpass_client.auth import BotAuth
 
@@ -97,6 +97,97 @@ class SeasonUserCog(commands.Cog):
                 "❌ **Error:** An unexpected error occurred.", ephemeral=True
             )
             print(f"An unexpected error in /join_season command: {e}")
+
+    @commands.slash_command(
+        name="season_participants",
+        description="View the list of users registered for a season.",
+    )
+    async def season_participants(
+        self,
+        ctx: discord.ApplicationContext,
+        season: discord.Option(
+            str,
+            "Optional: The season you want to view. Defaults to the latest one.",
+            autocomplete=search_seasons,
+            required=False,
+        ),
+    ):
+        """(Registered Users) Fetches and displays the participant list for a season."""
+        await ctx.defer(ephemeral=True)
+
+        try:
+            auth = BotAuth(api_key=self.bot_api_key, user_discord_id=ctx.author.id)
+
+            target_season_id: int
+            target_season_name: str
+
+            if season:
+                target_season_id = int(season)
+                all_seasons = await self.api_client.get_seasons(auth=auth)
+                target_season = next(
+                    (s for s in all_seasons if s["id"] == target_season_id), None
+                )
+                target_season_name = (
+                    target_season["name"]
+                    if target_season
+                    else f"Season ID {target_season_id}"
+                )
+            else:
+                latest_season = await self.api_client.get_latest_season(auth=auth)
+                target_season_id = latest_season["id"]
+                target_season_name = latest_season["name"]
+
+            participant_data = await self.api_client.get_season_users(
+                auth=auth, season_id=target_season_id
+            )
+
+            if not participant_data:
+                await ctx.respond(
+                    f"No users have joined **{target_season_name}** yet.",
+                    ephemeral=True,
+                )
+                return
+
+            participant_data.sort(key=lambda x: x["user"]["in_game_name"])
+
+            roster_pages = []
+            page_content = ""
+            for i, season_user in enumerate(participant_data, 1):
+                user = season_user["user"]
+                page_content += f"• {user['in_game_name']}\n"
+
+                if i % 15 == 0 and i != len(participant_data):
+                    embed = discord.Embed(
+                        title=f"Participants for {target_season_name}",
+                        description=page_content,
+                        color=discord.Color.blurple(),
+                    )
+                    roster_pages.append(embed)
+                    page_content = ""
+
+            if page_content:
+                embed = discord.Embed(
+                    title=f"Participants for {target_season_name}",
+                    description=page_content,
+                    color=discord.Color.blurple(),
+                )
+                roster_pages.append(embed)
+
+            paginator = pages.Paginator(
+                pages=roster_pages, disable_on_timeout=True, timeout=60
+            )
+            await paginator.respond(ctx.interaction, ephemeral=True)
+
+        except httpx.HTTPStatusError as e:
+            error_message = e.response.json().get(
+                "detail", "An unknown API error occurred."
+            )
+            await ctx.respond(f"❌ **Error:** {error_message}", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(
+                "❌ **Error:** An unexpected error occurred.", ephemeral=True
+            )
+            print(f"An unexpected error in /season_participants command: {e}")
 
 
 def setup(bot: discord.Bot):

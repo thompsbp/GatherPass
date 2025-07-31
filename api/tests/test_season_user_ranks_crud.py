@@ -127,7 +127,6 @@ async def test_get_user_ranks_for_season(async_db_session):
     async_db_session.add_all([user, season, rank1, rank2])
     await async_db_session.commit()
 
-    # --- The Definitive Fix: Refresh all objects after commit ---
     await async_db_session.refresh(user)
     await async_db_session.refresh(season)
     await async_db_session.refresh(rank1)

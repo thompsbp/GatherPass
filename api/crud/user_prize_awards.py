@@ -36,7 +36,6 @@ async def create_user_prize_award(
     await db.commit()
     await db.refresh(new_award)
 
-    # Re-fetch with all relationships eagerly loaded for the API response
     result = await db.execute(
         select(models.UserPrizeAward)
         .filter(models.UserPrizeAward.id == new_award.id)
@@ -96,8 +95,6 @@ async def update_user_prize_award(
     actor: models.User,
 ) -> models.UserPrizeAward:
     """Updates a prize award, typically to mark it as delivered."""
-    # --- The Permanent Fix ---
-    # 1. Capture the ID before the object's state is expired by the commit.
     award_id = award.id
 
     update_dict = update_data.model_dump(exclude_unset=True)
@@ -111,7 +108,6 @@ async def update_user_prize_award(
     db.add(award)
     await db.commit()
 
-    # 2. Use the safe, captured ID to re-fetch the fully-loaded object.
     result = await db.execute(
         select(models.UserPrizeAward)
         .filter(models.UserPrizeAward.id == award_id)

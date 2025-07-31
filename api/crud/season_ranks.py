@@ -66,6 +66,7 @@ async def get_ranks_for_season(
     result = await db.execute(
         select(models.SeasonRank)
         .filter(models.SeasonRank.season_id == season_id)
+        .order_by(models.SeasonRank.number.asc())
         .options(
             selectinload(models.SeasonRank.rank), selectinload(models.SeasonRank.season)
         )

@@ -27,7 +27,6 @@ async def handle_add_rank_to_season(
     db: AsyncSession = Depends(get_db),
 ):
     """(Admin) Adds a rank to a specific season with requirements."""
-    # First, ensure the season and rank actually exist
     season = await crud.get_season_by_id(db, season_id=season_id)
     if not season:
         raise HTTPException(status_code=404, detail="Season not found")
