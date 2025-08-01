@@ -93,12 +93,14 @@ class Submission(Base):
     total_point_value = Column(INT)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
-    created_by = Column(String(255), nullable=False)
-    updated_by = Column(String(255), nullable=False)
+    created_by = Column(INT, ForeignKey("user.id"), nullable=False)
+    updated_by = Column(INT, ForeignKey("user.id"), nullable=False)
     change_requested_by = Column(BigInteger)
 
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_id])
     season_item = relationship("SeasonItem")
+    creator = relationship("User", foreign_keys=[created_by])
+    updater = relationship("User", foreign_keys=[updated_by])
 
 
 # --- Join & Tracking Tables ---
@@ -112,13 +114,15 @@ class SeasonUser(Base):
     total_points = Column(INT, nullable=False, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
-    created_by = Column(String(255), nullable=False)
-    updated_by = Column(String(255), nullable=False)
+    created_by = Column(INT, ForeignKey("user.id"), nullable=False)
+    updated_by = Column(INT, ForeignKey("user.id"), nullable=False)
     change_requested_by = Column(BigInteger)
     __table_args__ = (UniqueConstraint("user_id", "season_id", name="_user_season_uc"),)
 
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_id])
     season = relationship("Season")
+    creator = relationship("User", foreign_keys=[created_by])
+    updater = relationship("User", foreign_keys=[updated_by])
 
 
 class SeasonItem(Base):

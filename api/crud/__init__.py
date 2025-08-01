@@ -1,7 +1,6 @@
 # ==============================================================================
 # FILE: api/crud/__init__.py
 # ==============================================================================
-
 from .items import create_item, delete_item, get_item_by_id, get_items, update_item
 from .prizes import (
     create_prize,
@@ -33,9 +32,9 @@ from .season_ranks import (
     update_season_rank,
 )
 from .season_user_ranks import (
-    award_rank_to_user,
     get_all_awarded_ranks_for_season,
     get_user_ranks_for_season,
+    promote_user_to_rank,
 )
 from .season_users import (
     get_all_users_for_season,
@@ -51,7 +50,14 @@ from .seasons import (
     get_seasons,
     update_season,
 )
-from .submissions import create_submission, get_submissions_for_user_in_season
+from .submissions import (
+    create_submission,
+    delete_submission,
+    get_submission_by_id,
+    get_submissions,
+    update_submission,
+)
+from .summaries import get_user_season_summary
 from .user_prize_awards import (
     create_user_prize_award,
     get_awards_for_user,

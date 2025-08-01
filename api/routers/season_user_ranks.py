@@ -20,37 +20,33 @@ router = APIRouter(
 
 
 @router.post(
-    "/users/{user_id}/seasons/{season_id}/ranks", response_model=schemas.SeasonUserRank
+    "/users/{user_id}/seasons/{season_id}/promote",
+    response_model=schemas.PromotionResult,
 )
-async def handle_award_rank_to_user(
+async def handle_promote_user_to_rank(
     user_id: int,
     season_id: int,
-    rank_award_data: schemas.SeasonUserRankCreate,
+    promotion_data: schemas.SeasonRankPromotionCreate,
     admin_user: models.User = Depends(require_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """(Admin) Awards a specific season rank to a user."""
-    user_to_award = await crud.get_user_by_id(db, user_id=user_id)
-    if not user_to_award:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    season_rank_to_award = await crud.get_season_rank_by_ids(
-        db, season_id=season_id, rank_id=rank_award_data.season_rank_id
+    """
+    (Admin) Promotes a user to a target rank, backfilling any missed ranks and prizes.
+    """
+    promotion_result_data = await crud.promote_user_to_rank(
+        db,
+        user_id=user_id,
+        season_id=season_id,
+        target_season_rank_id=promotion_data.season_rank_id,
     )
-    if not season_rank_to_award:
-        raise HTTPException(
-            status_code=404, detail="That rank is not part of this season"
-        )
 
-    new_award = await crud.award_rank_to_user(
-        db, user_id=user_id, season_rank_id=season_rank_to_award.id
-    )
-    if new_award is None:
+    if not promotion_result_data["awarded_ranks"]:
         raise HTTPException(
             status_code=400,
-            detail="User has already been awarded this rank.",
+            detail="Promotion failed. The user may already have this rank or a higher one, or the target rank is not part of this season.",
         )
-    return new_award
+
+    return schemas.PromotionResult(**promotion_result_data)
 
 
 @router.get(

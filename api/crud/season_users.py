@@ -38,7 +38,10 @@ async def register_user_for_season(
         select(models.SeasonUser)
         .filter(models.SeasonUser.id == new_season_user.id)
         .options(
-            selectinload(models.SeasonUser.user), selectinload(models.SeasonUser.season)
+            selectinload(models.SeasonUser.user),
+            selectinload(models.SeasonUser.season),
+            selectinload(models.SeasonUser.creator),
+            selectinload(models.SeasonUser.updater),
         )
     )
     return result.scalars().one()

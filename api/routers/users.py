@@ -42,7 +42,7 @@ async def handle_get_users(
     offset: int = 0,
     limit: int = 100,
     in_game_name: str | None = None,
-    acting_admin: models.User = Depends(require_admin_user),
+    user: models.User = Depends(require_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """(Admin) Gets a list of all users."""

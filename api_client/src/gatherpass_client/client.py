@@ -191,29 +191,6 @@ class APIClient:
         except httpx.HTTPStatusError as e:
             raise e
 
-    async def create_submission(
-        self, auth: AuthStrategy, user_id: int, season_item_id: int, quantity: int
-    ):
-        """Creates a new submission record via the API."""
-        headers = {"Content-Type": "application/json"}
-        headers.update(auth.get_headers())
-
-        payload = {
-            "user_id": user_id,
-            "season_item_id": season_item_id,
-            "quantity": quantity,
-        }
-
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/submissions/", headers=headers, json=payload
-                )
-                response.raise_for_status()
-                return response.json()
-        except httpx.HTTPStatusError as e:
-            raise e
-
     async def get_latest_season(self, auth: AuthStrategy):
         """Fetches the season with the highest number from the API."""
         headers = {"Content-Type": "application/json"}
@@ -360,6 +337,133 @@ class APIClient:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{self.base_url}/seasons/{season_id}/promotion-candidates",
+                    headers=headers,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    async def promote_user_to_rank(
+        self, auth: AuthStrategy, user_id: int, season_id: int, season_rank_id: int
+    ):
+        """Promotes a user to a target rank, backfilling any missed ranks."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        payload = {"season_rank_id": season_rank_id}
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/users/{user_id}/seasons/{season_id}/promote",
+                    headers=headers,
+                    json=payload,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    # --- Submissions ---
+    async def create_submission(
+        self, auth: AuthStrategy, user_id: int, season_item_id: int, quantity: int
+    ):
+        """Creates a new submission record via the API."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        payload = {
+            "user_id": user_id,
+            "season_item_id": season_item_id,
+            "quantity": quantity,
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/submissions/", headers=headers, json=payload
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    async def update_submission(
+        self, auth: AuthStrategy, submission_id: int, new_quantity: int
+    ):
+        """Updates a submission's quantity."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        payload = {"quantity": new_quantity}
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.patch(
+                    f"{self.base_url}/submissions/{submission_id}",
+                    headers=headers,
+                    json=payload,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    async def delete_submission(self, auth: AuthStrategy, submission_id: int):
+        """Deletes a submission record via the API."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.delete(
+                    f"{self.base_url}/submissions/{submission_id}",
+                    headers=headers,
+                )
+                response.raise_for_status()
+                return True
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    async def get_submissions(
+        self, auth: AuthStrategy, season_id: int, user_id: int | None = None
+    ):
+        """
+        Fetches submissions for a season. Can be optionally filtered by user_id.
+        """
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        params = {}
+        params["season_id"] = season_id
+
+        if user_id:
+            params["user_id"] = user_id
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/submissions/",
+                    headers=headers,
+                    params=params,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPStatusError as e:
+            raise e
+
+    # --- Summaries ---
+    async def get_my_season_summary(self, auth: AuthStrategy, season_id: int):
+        """Fetches the current authenticated user's progress summary for a season."""
+        headers = {"Content-Type": "application/json"}
+        headers.update(auth.get_headers())
+
+        try:
+            async with httpx.AsyncClient() as client:
+                # Note the new, simpler "/me/" path
+                response = await client.get(
+                    f"{self.base_url}/me/seasons/{season_id}/summary",
                     headers=headers,
                 )
                 response.raise_for_status()

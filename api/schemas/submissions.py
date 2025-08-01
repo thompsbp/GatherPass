@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 # Import base schemas for nesting
 from .season_items import SeasonItem
-from .users import User
+from .users import User, UserIdentifier
 
 
 class SubmissionBase(BaseModel):
@@ -34,5 +34,13 @@ class Submission(SubmissionBase):
     created_at: datetime
     user: User
     season_item: SeasonItem
+    creator: Optional[UserIdentifier] = None
+    updater: Optional[UserIdentifier] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SubmissionUpdate(BaseModel):
+    """Schema for data that can be updated on a submission record."""
+
+    quantity: int

@@ -19,6 +19,7 @@ from routers import season_user_ranks  # pyright: ignore [reportMissingImports]
 from routers import season_users  # pyright: ignore [reportMissingImports]
 from routers import seasons  # pyright: ignore [reportMissingImports]
 from routers import submissions  # pyright: ignore [reportMissingImports]
+from routers import summaries  # pyright: ignore [reportMissingImports]
 from routers import token  # pyright: ignore [reportMissingImports]
 from routers import user_prize_awards  # pyright: ignore [reportMissingImports]
 from routers import users  # pyright: ignore [reportMissingImports]
@@ -51,7 +52,7 @@ app.include_router(season_prizes.router)
 app.include_router(user_prize_awards.user_awards_router)
 app.include_router(user_prize_awards.awards_router)
 app.include_router(submissions.router)
-app.include_router(submissions.user_season_submissions_router)
+app.include_router(summaries.router)
 
 
 # --- Global Endpoints ---

@@ -35,3 +35,9 @@ class User(BaseModel):
     admin: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserIdentifier(BaseModel):
+    """A lightweight schema for identifying a user by name."""
+
+    in_game_name: Optional[str] = "Unknown User"

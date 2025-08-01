@@ -26,8 +26,14 @@ class SeasonUserRank(BaseModel):
     """
 
     id: int
-    user: User  # Nested User object
-    season_rank: SeasonRank  # Nested SeasonRank object
+    user: User
+    season_rank: SeasonRank
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SeasonRankPromotionCreate(BaseModel):
+    """Schema for the body of a promotion request."""
+
+    season_rank_id: int

@@ -27,8 +27,6 @@ class PromotionCog(commands.Cog):
     async def search_seasons(self, ctx: discord.AutocompleteContext):
         """Autocomplete for finding seasons by name."""
         query = ctx.value
-        if not query:
-            return []
         try:
             auth = BotAuth(
                 api_key=self.bot_api_key, user_discord_id=ctx.interaction.user.id
@@ -38,6 +36,53 @@ class PromotionCog(commands.Cog):
                 discord.OptionChoice(name=s["name"], value=str(s["id"]))
                 for s in seasons
             ]
+        except Exception:
+            return []
+
+    async def search_registered_users(self, ctx: discord.AutocompleteContext):
+        """Autocomplete for finding registered users by in-game name."""
+        try:
+            auth = BotAuth(
+                api_key=self.bot_api_key, user_discord_id=ctx.interaction.user.id
+            )
+            users = await self.api_client.get_users(auth=auth, name_query=ctx.value)
+            # The value is the user's internal API ID, which the promotion endpoint needs.
+            return [
+                discord.OptionChoice(name=u["in_game_name"], value=str(u["id"]))
+                for u in users
+            ][:25]
+        except Exception:
+            return []
+
+    async def search_season_ranks(self, ctx: discord.AutocompleteContext):
+        """
+        Chained autocomplete for ranks, dependent on the selected season.
+        """
+        try:
+            auth = BotAuth(
+                api_key=self.bot_api_key, user_discord_id=ctx.interaction.user.id
+            )
+
+            # Get the season ID from the 'season' option the user has already filled out.
+            season_id_str = ctx.options.get("season")
+            if not season_id_str:
+                return [
+                    discord.OptionChoice(
+                        name="Please select a season first.", value="0"
+                    )
+                ]
+
+            season_ranks = await self.api_client.get_season_ranks(
+                auth=auth, season_id=int(season_id_str)
+            )
+
+            query = ctx.value.lower()
+            # The value is the season_rank's unique ID.
+            return [
+                discord.OptionChoice(name=sr["rank"]["name"], value=str(sr["id"]))
+                for sr in season_ranks
+                if query in sr["rank"]["name"].lower()
+            ][:25]
         except Exception:
             return []
 
@@ -142,8 +187,105 @@ class PromotionCog(commands.Cog):
             )
             print(f"An unexpected error in /check_promotions command: {e}")
 
+    @commands.slash_command(
+        name="promote_user",
+        description="Promote a user to a rank, backfilling any missed ranks.",
+    )
+    async def promote_user(
+        self,
+        ctx: discord.ApplicationContext,
+        season: discord.Option(
+            str, "The season for this promotion.", autocomplete=search_seasons
+        ),
+        user: discord.Option(
+            str, "The user to promote.", autocomplete=search_registered_users
+        ),
+        rank: discord.Option(
+            str,
+            "The target rank to promote the user to.",
+            autocomplete=search_season_ranks,
+        ),
+    ):
+        """(Admin-Only) Promotes a user to a target rank."""
+        await ctx.defer(ephemeral=True)
 
-# This function is required for the bot to load the cog
+        try:
+            auth = BotAuth(api_key=self.bot_api_key, user_discord_id=ctx.author.id)
+            target_season_id = int(season)
+            target_user_id = int(user)
+            target_season_rank_id = int(rank)
+
+            if target_season_rank_id == 0:
+                await ctx.respond(
+                    "❌ Invalid rank selected. Please ensure you select a season first.",
+                    ephemeral=True,
+                )
+                return
+
+            promotion_result = await self.api_client.promote_user_to_rank(
+                auth=auth,
+                user_id=target_user_id,
+                season_id=target_season_id,
+                season_rank_id=target_season_rank_id,
+            )
+
+            awarded_ranks = promotion_result["awarded_ranks"]
+            awarded_prizes = promotion_result["awarded_prizes"]
+
+            all_users = await self.api_client.get_users(auth=auth)
+            target_user_obj = next(
+                (u for u in all_users if u["id"] == target_user_id), None
+            )
+            user_name = (
+                target_user_obj["in_game_name"] if target_user_obj else "Unknown User"
+            )
+
+            all_seasons = await self.api_client.get_seasons(auth=auth)
+            target_season_obj = next(
+                (s for s in all_seasons if s["id"] == target_season_id), None
+            )
+            season_name = (
+                target_season_obj["name"] if target_season_obj else "Unknown Season"
+            )
+
+            awarded_rank_names = [
+                f"**{award['season_rank']['rank']['name']}**" for award in awarded_ranks
+            ]
+
+            success_message = (
+                f"✅ **{user_name}** has been promoted in **{season_name}**!\n\n"
+                f"Newly Awarded Ranks:\n" + ", ".join(awarded_rank_names)
+            )
+            if awarded_prizes:
+                awarded_prize_names = [
+                    f"- {prize['season_prize']['prize']['description']}"
+                    for prize in awarded_prizes
+                ]
+                success_message += "\n\n**Prizes Awarded:**\n" + "\n".join(
+                    awarded_prize_names
+                )
+
+            await ctx.respond(success_message, ephemeral=True)
+
+            admin_channel = self.bot.get_channel(self.admin_channel_id)
+            if admin_channel:
+                final_rank_name = awarded_ranks[-1]["season_rank"]["rank"]["name"]
+                await admin_channel.send(
+                    f"🏆 {ctx.author.mention} promoted **{user_name}** to **{final_rank_name}** in **{season_name}**."
+                )
+
+        except httpx.HTTPStatusError as e:
+            error_message = e.response.json().get(
+                "detail", "An unknown API error occurred."
+            )
+            await ctx.respond(f"❌ **Error:** {error_message}", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(
+                "❌ **Error:** An unexpected error occurred.", ephemeral=True
+            )
+            print(f"An unexpected error in /promote_user command: {e}")
+
+
 def setup(bot: discord.Bot):
     bot.add_cog(
         PromotionCog(bot, bot.api_client, bot.admin_channel_id, bot.bot_api_key)
