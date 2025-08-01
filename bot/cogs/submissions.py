@@ -113,13 +113,10 @@ class SubmissionCog(commands.Cog):
         await ctx.defer(ephemeral=True)
 
         try:
-            # The auth provider uses the admin's ID for authorization
             auth = BotAuth(api_key=self.bot_api_key, user_discord_id=ctx.author.id)
 
-            # The 'user' variable from autocomplete is the target user's internal API ID
             target_user_id = int(user)
 
-            # The 'item' value from autocomplete is the season_item_id
             target_season_item_id = int(item)
 
             result = await self.api_client.create_submission(
@@ -129,7 +126,6 @@ class SubmissionCog(commands.Cog):
                 quantity=quantity,
             )
 
-            # Prepare a nice confirmation message
             submitted_item = result["season_item"]["item"]
             season_name = result["season_item"]["season"]["name"]
             points_earned = result["total_point_value"]
@@ -203,7 +199,6 @@ class SubmissionCog(commands.Cog):
 
             query = ctx.value.lower()
 
-            # Format the choices to be descriptive
             choices = []
             for sub in submissions:
                 item_name = sub["season_item"]["item"]["name"]
