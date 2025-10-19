@@ -65,6 +65,17 @@ class SummaryCog(commands.Cog):
                 name="Current Rank", value=f"**{current_rank_name}**", inline=False
             )
 
+            if summary["item_summary"]:
+                item_summary_list = [
+                    f"- **{s['total_quantity']}x** {s['item']['name']}"
+                    for s in summary["item_summary"]
+                ]
+                embed.add_field(
+                    name="Items Submitted",
+                    value="\n".join(item_summary_list),
+                    inline=False,
+                )
+
             if summary["awarded_prizes"]:
                 prize_list = "\n".join(
                     [f"- {prize['description']}" for prize in summary["awarded_prizes"]]

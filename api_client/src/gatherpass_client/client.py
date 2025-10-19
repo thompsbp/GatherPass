@@ -280,15 +280,24 @@ class APIClient:
         except httpx.HTTPStatusError as e:
             raise e
 
-    async def get_season_users(self, auth: AuthStrategy, season_id: int):
-        """Fetches all users registered for a specific season (the leaderboard)."""
+    async def get_season_users(
+        self, auth: AuthStrategy, season_id: int, order: str = "name_asc"
+    ):
+        """
+        Fetches all users registered for a specific season.
+        `order` can be 'name_asc' (default) or 'points_desc'.
+        """
         headers = {"Content-Type": "application/json"}
         headers.update(auth.get_headers())
+
+        params = {"order": order}
 
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.base_url}/seasons/{season_id}/users", headers=headers
+                    f"{self.base_url}/seasons/{season_id}/users",
+                    headers=headers,
+                    params=params,
                 )
                 response.raise_for_status()
                 return response.json()

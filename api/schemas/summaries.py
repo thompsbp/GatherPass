@@ -7,8 +7,16 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from .items import Item
 from .prizes import Prize
 from .ranks import Rank
+
+
+class UserItemSummary(BaseModel):
+    """Represents the total quantity of a single item a user has submitted."""
+
+    item: Item
+    total_quantity: int
 
 
 class UserSeasonSummary(BaseModel):
@@ -21,3 +29,4 @@ class UserSeasonSummary(BaseModel):
     total_points: int
     current_rank: Optional[Rank] = None
     awarded_prizes: List[Prize] = []
+    item_summary: List[UserItemSummary] = []

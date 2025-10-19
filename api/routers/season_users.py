@@ -71,11 +71,12 @@ async def handle_register_user_for_season(
 @router.get("/{season_id}/users", response_model=List[schemas.SeasonUser])
 async def handle_get_all_users_for_season(
     season_id: int,
+    order: str = "name_asc",
     registered_user: models.User = Depends(require_registered_user),
     db: AsyncSession = Depends(get_db),
 ):
     """(Registered Users) Retrieves the leaderboard for a specific season."""
-    return await crud.get_all_users_for_season(db, season_id=season_id)
+    return await crud.get_all_users_for_season(db, season_id=season_id, order=order)
 
 
 @router.get("/{season_id}/users/{user_id}", response_model=schemas.SeasonUser)

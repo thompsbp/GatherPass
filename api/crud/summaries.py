@@ -8,9 +8,41 @@ import asyncio
 import crud
 import models
 import schemas
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+
+
+async def get_user_item_summary_for_season(
+    db: AsyncSession, user_id: int, season_id: int
+) -> list[schemas.UserItemSummary]:
+    """
+    Calculates the total quantity of each unique item a user has submitted
+    for a specific season.
+    """
+
+    result = await db.execute(
+        select(
+            models.Item, func.sum(models.Submission.quantity).label("total_quantity")
+        )
+        .join(
+            models.SeasonItem, models.Submission.season_item_id == models.SeasonItem.id
+        )
+        .join(models.Item, models.SeasonItem.item_id == models.Item.id)
+        .filter(
+            models.Submission.user_id == user_id,
+            models.SeasonItem.season_id == season_id,
+        )
+        .group_by(models.Item.id)
+        .order_by(models.Item.name.asc())
+    )
+
+    summary_list = [
+        schemas.UserItemSummary(item=item, total_quantity=total_quantity)
+        for item, total_quantity in result.all()
+    ]
+    return summary_list
 
 
 async def get_user_season_summary(
@@ -57,8 +89,12 @@ async def get_user_season_summary(
         )
     )
 
-    highest_rank_result, awarded_prizes_result = await asyncio.gather(
-        highest_rank_task, awarded_prizes_task
+    item_summary_task = get_user_item_summary_for_season(
+        db, user_id=user_id, season_id=season_id
+    )
+
+    highest_rank_result, awarded_prizes_result, item_summary = await asyncio.gather(
+        highest_rank_task, awarded_prizes_task, item_summary_task
     )
 
     highest_awarded_rank_record = highest_rank_result.scalars().first()
@@ -74,6 +110,7 @@ async def get_user_season_summary(
             else None
         ),
         awarded_prizes=[award.season_prize.prize for award in awarded_prizes_records],
+        item_summary=item_summary,
     )
 
     return summary

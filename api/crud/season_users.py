@@ -64,16 +64,25 @@ async def get_user_progress_in_season(
 
 
 async def get_all_users_for_season(
-    db: AsyncSession, season_id: int
+    db: AsyncSession, season_id: int, order: str = "name_asc"
 ) -> list[models.SeasonUser]:
     """
-    Retrieves a list of all users participating in a specific season (leaderboard).
+    Retrieves a list of all users in a season, with flexible sorting.
     """
-    result = await db.execute(
+    query = (
         select(models.SeasonUser)
         .filter(models.SeasonUser.season_id == season_id)
         .options(
             selectinload(models.SeasonUser.user), selectinload(models.SeasonUser.season)
         )
     )
+
+    if order == "points_desc":
+        query = query.order_by(models.SeasonUser.total_points.desc())
+    else:
+        query = query.join(
+            models.User, models.SeasonUser.user_id == models.User.id
+        ).order_by(models.User.in_game_name.asc())
+
+    result = await db.execute(query)
     return list(result.scalars().all())

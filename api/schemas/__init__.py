@@ -20,7 +20,7 @@ from .season_user_ranks import (
 from .season_users import SeasonUser, SeasonUserCreate
 from .seasons import Season, SeasonCreate, SeasonUpdate
 from .submissions import Submission, SubmissionCreate, SubmissionUpdate
-from .summaries import UserSeasonSummary
+from .summaries import UserItemSummary, UserSeasonSummary
 from .user_prize_awards import (
     UserPrizeAward,
     UserPrizeAwardCreate,

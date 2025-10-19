@@ -57,7 +57,7 @@ from .submissions import (
     get_submissions,
     update_submission,
 )
-from .summaries import get_user_season_summary
+from .summaries import get_user_item_summary_for_season, get_user_season_summary
 from .user_prize_awards import (
     create_user_prize_award,
     get_awards_for_user,

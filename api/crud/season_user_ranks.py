@@ -65,18 +65,20 @@ async def promote_user_to_rank(
         select(models.SeasonUserRank)
         .filter(models.SeasonUserRank.id.in_(newly_awarded_rank_ids))
         .options(
+            selectinload(models.SeasonUserRank.user),
             selectinload(models.SeasonUserRank.season_rank).selectinload(
                 models.SeasonRank.rank
-            )
+            ),
         )
     )
     prizes_result = await db.execute(
         select(models.UserPrizeAward)
         .filter(models.UserPrizeAward.id.in_(newly_awarded_prize_ids))
         .options(
+            selectinload(models.UserPrizeAward.user),
             selectinload(models.UserPrizeAward.season_prize).selectinload(
                 models.SeasonPrize.prize
-            )
+            ),
         )
     )
 
